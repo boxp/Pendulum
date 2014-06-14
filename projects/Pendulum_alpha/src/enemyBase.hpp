@@ -92,6 +92,28 @@ public:
 				attack_ = AttackPtr(new CNWayShot(shot));
 			}
 		}
+
+		if (buf == "NWaySing")
+		{
+			f >> buf;
+			if (buf != "{") return f.eof();
+			else
+			{
+				charabase::CharBase shot_info;
+				f >> buf;	// Imgラベル読み飛ばし
+				f >> shot_info.resname;
+
+				f >> buf;	// Widthラベル読み飛ばし
+				LoadValue(f, obj_, shot_info.size.x);
+				f >> buf;	// Heightラベル読み飛ばし
+				LoadValue(f, obj_, shot_info.size.y);
+
+				CShot shot(shot_info);
+				f >> buf;	// 当たり判定ラベル読み飛ばし
+				shot.LoadCollisions(f);
+				attack_ = AttackPtr(new CNWayShot(shot));
+			}
+		}
 		
 		return f.eof();
 	}

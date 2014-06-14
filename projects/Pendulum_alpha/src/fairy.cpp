@@ -2,9 +2,11 @@
 #define DEF_SHAPE_DRAW
 #endif
 
+
 #include "define.h"
-#include "bird.h"
+#include "fairy.h"
 #include "nWayShot.h"
+#include "nWaySing.h"
 #include "setting.h"
 
 //#include "player.h"
@@ -13,36 +15,36 @@
 #include "actionPoint.h"
 
 /*
-const float CBird::SEARCH_RANGE = 500.0f;
-const float CBird::CHASE_RANGE = 300.0f;
-const float CBird::ATTACK_RANGE = 100.f;
-const float CBird::RETURN_RANGE = 3.f;
-const float CBird::MOVE_SPEED = 100.f;
+const float CFairy::SEARCH_RANGE = 500.0f;
+const float CFairy::CHASE_RANGE = 300.0f;
+const float CFairy::ATTACK_RANGE = 100.f;
+const float CFairy::RETURN_RANGE = 3.f;
+const float CFairy::MOVE_SPEED = 100.f;
 //*/
 
-void (CBird::*CBird::StateStep_[])() =
+void (CFairy::*CFairy::StateStep_[])() =
 {
-	&CBird::WaitStep,
-	&CBird::ChaseStep,
-	&CBird::ReturnStep,
-	&CBird::AttackStep,
-	&CBird::DestroyStep,
+	&CFairy::WaitStep,
+	&CFairy::ChaseStep,
+	&CFairy::ReturnStep,
+	&CFairy::AttackStep,
+	&CFairy::DestroyStep,
 };
 
-CBird::CBird() :
-IEnemy("E_Bird")
+CFairy::CFairy() :
+IEnemy("E_Fairy")
 {
 }
 
-CBird::CBird(const mymath::Vec3f& pos) :
-IEnemy("E_Bird")
+CFairy::CFairy(const mymath::Vec3f& pos) :
+IEnemy("E_Fairy")
 , startPos_(pos)
 {
 	init();
 	obj_.pos = pos;
 }
-CBird::CBird(float x, float y, float z) :
-IEnemy("E_Bird")
+CFairy::CFairy(float x, float y, float z) :
+IEnemy("E_Fairy")
 , startPos_(mymath::Vec3f(x, y, z))
 {
 	init();
@@ -51,16 +53,16 @@ IEnemy("E_Bird")
 	obj_.pos.z = z;
 }
 
-CBird::~CBird()
+CFairy::~CFairy()
 {
-	
+
 }
 
 
-void CBird::init()
+void CFairy::init()
 {
 	using common::FindChunk;
-	
+
 	gm()->GetData(*this);
 
 	elapsedTime_ = 0.f;
@@ -71,7 +73,7 @@ void CBird::init()
 
 }
 
-void CBird::step()
+void CFairy::step()
 {
 	ICharacter::step();
 	elapsedTime_ += system::FrameTime;
@@ -93,7 +95,7 @@ void CBird::step()
 
 }
 
-void CBird::draw()
+void CFairy::draw()
 {
 	if (attack_ != nullptr)
 		attack_->draw();
@@ -113,12 +115,12 @@ void CBird::draw()
 }
 
 
-void CBird::WaitStep()
+void CFairy::WaitStep()
 {
 
 }
 
-void CBird::ChaseStep()
+void CFairy::ChaseStep()
 {
 	const mymath::Vec3f& plPos = gm()->GetPlayerPos();
 	const mymath::Vec3f dist = plPos - obj_.pos;
@@ -127,13 +129,13 @@ void CBird::ChaseStep()
 	obj_.Move();
 }
 
-void CBird::ReturnStep()
+void CFairy::ReturnStep()
 {
 	mymath::Vec3f dist = startPos_ - obj_.pos;
-	
-	if(mymath::PYTHA(dist.x,dist.y) > mymath::POW2(loadInfo_.RETURN_RANGE))
+
+	if (mymath::PYTHA(dist.x, dist.y) > mymath::POW2(loadInfo_.RETURN_RANGE))
 	{
-		float angle = std::atan2f(dist.y,dist.x);
+		float angle = std::atan2f(dist.y, dist.x);
 		obj_.add = mymath::Vec3f::Rotate(angle) * loadInfo_.MOVE_SPEED;
 	}
 	else
@@ -144,10 +146,10 @@ void CBird::ReturnStep()
 	obj_.Move();
 }
 
-void CBird::AttackStep()
+void CFairy::AttackStep()
 {
 	// 攻撃
-	if(elapsedTime_ > nextActTime_)
+	if (elapsedTime_ > nextActTime_)
 	{
 		CreateAttack();
 		state_ = State::WAIT;
@@ -155,11 +157,11 @@ void CBird::AttackStep()
 	}
 }
 
-void CBird::DestroyStep()
+void CFairy::DestroyStep()
 {
 	// 0.5秒
 	obj_.alpha -= 255.f / 0.5f * system::FrameTime;
-	if(obj_.alpha < 0.f)
+	if (obj_.alpha < 0.f)
 	{
 		obj_.alpha = 0.f;
 		state_ = State::WAIT;
@@ -168,7 +170,7 @@ void CBird::DestroyStep()
 	return;
 }
 
-void CBird::DecideState()
+void CFairy::DecideState()
 {
 	if (state_ == State::DESTROY)
 	{
@@ -213,26 +215,37 @@ void CBird::DecideState()
 	}
 }
 
-void CBird::CreateAttack()
+void CFairy::CreateAttack()
 {
+
 	const mymath::Vec3f& mypos = obj_.pos;
-	const mymath::Vec3f& plpos = gm()->GetPlayerPos();
-	const mymath::Vec3f vec = plpos - mypos;
-	float angle = math::Calc_RadToDegree(std::atan2f(-vec.y, vec.x));
+
+	float dice = gplib::math::GetRandom<int>(0, 9);
+	float angle = gplib::math::GetRandom<int>(0, 360);
+	
 	const float INTERVAL = 20.f;	// 横間隔
 	const float SP = 70.f;			// 初速度
 	const float ACC = 5.f;			// 加速度
-	std::dynamic_pointer_cast<CNWayShot>(attack_)->CreateAttack(
-				mypos,
-				5,
-				angle,INTERVAL,
-				SP,ACC);
+
+	if (dice < 2) {
+		// 2/10の確率で歌攻撃を行う
+		std::dynamic_pointer_cast<CNWaySing>(attack_)->CreateAttack(
+			mypos,
+			5,
+			angle,
+			SP, ACC);
+	} else {
+	// 8/10の確率で敵を引きつける
+	    // HaleEnemy();
+	};
+
+	
 }
 
 
-void CBird::hit(const ObjPtr& rival)
+void CFairy::hit(const ObjPtr& rival)
 {
-	if(rival->FindName("ActionPolygon"))
+	if (rival->FindName("ActionPolygon"))
 	{
 		// めり込み補正,通過補正
 		const auto& ap = std::dynamic_pointer_cast<CActionPolygon>(rival);
@@ -241,16 +254,16 @@ void CBird::hit(const ObjPtr& rival)
 		intersection = ap->IntersectionPoint2Nearest(prePos_, obj_.pos);
 		obj_.pos = intersection;
 		obj_.pos -= dist.Normalize();
-		
+
 	}
 }
 
 
 
-bool CBird::ApplyDamage(int dam)
+bool CFairy::ApplyDamage(int dam)
 {
 	// 死亡アニメーション中はスキップ
-	if(state_ == State::DESTROY) return true;
+	if (state_ == State::DESTROY) return true;
 	// ダメージが入ったら即死
 	state_ = State::DESTROY;
 
@@ -259,21 +272,21 @@ bool CBird::ApplyDamage(int dam)
 	//InsertObject(ObjPtr(new CEffectExplosion(obj_.pos)));
 	//// SE
 	//DSound_Play(SE::EXPLODE);
-	
+
 	return true;
 }
 
-Base::Collisions CBird::GetCollisionAreas()
+Base::Collisions CFairy::GetCollisionAreas()
 {
 	// 死亡アニメーション中はスキップ
-	if(state_ != State::DESTROY)
+	if (state_ != State::DESTROY)
 	{
 		return __super::GetCollisionAreas();
 	}
 	return Base::Collisions();
 }
 
-void CBird::SetInfo(const LoadInfo& info)
+void CFairy::SetInfo(const LoadInfo& info)
 {
 
 	loadInfo_ = info;
